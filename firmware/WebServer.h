@@ -26,13 +26,11 @@
 #ifndef WEBDUINO_H_
 #define WEBDUINO_H_
 
-#define SPARK_CORE
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-#ifndef SPARK_CORE
+#ifndef PLATFORM_ID
 #include <Ethernet.h>
 #include <EthernetClient.h>
 #include <EthernetServer.h>
@@ -44,7 +42,11 @@
 
 // TODO - this is necessary to avoid sockets being unexpectedly closed.
 // https://community.spark.io/t/unwanted-but-reproducable-disconnect-in-tcpclient/5265
+#if defined(PLATFORM_ID) && PLATFORM_ID < 3
 #define fixmedelay() delay(20)
+#else
+#define fixmedelay()
+#endif
 
 /********************************************************************
  * CONFIGURATION
@@ -142,7 +144,7 @@
 	#define SERIAL_DUMP(buf, len)
 #endif
 
-#if WEBDUINO_SERIAL_DEBUGGING && !defined(SPARK_CORE)
+#if WEBDUINO_SERIAL_DEBUGGING && !defined(PLATFORM_ID)
 #include <HardwareSerial.h>
 #endif
 
@@ -339,8 +341,8 @@ public:
   // Close the current connection and flush ethernet buffers
   void reset(); 
 private:
-  
-#ifdef SPARK_CORE
+
+#ifdef PLATFORM_ID
   TCPServer m_server;
   TCPClient m_client;
 #else
@@ -472,8 +474,8 @@ void WebServer::flushBuf()
 void WebServer::writeP(const unsigned char *data, size_t length)
 {
   // copy data out of program memory into local storage
-#ifdef SPARK_CORE
-    fixmedelay();    
+#ifdef PLATFORM_ID
+   fixmedelay();
    write(data, length);
 #else
   while (length--)
@@ -486,7 +488,7 @@ void WebServer::writeP(const unsigned char *data, size_t length)
 void WebServer::printP(const unsigned char *str)
 {
   // copy data out of program memory into local storage
-#ifdef SPARK_CORE
+#ifdef PLATFORM_ID
     fixmedelay();
     write((const uint8_t*)str, strlen((const char*)str));
 #else
